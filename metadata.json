@@ -1,0 +1,7 @@
+{
+  "name": "AI Beauty Agent",
+  "description": "Your personal AI-powered beauty consultant that finds the perfect skincare and makeup products tailored specifically for your skin type and goals using advanced Gemini reasoning.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
