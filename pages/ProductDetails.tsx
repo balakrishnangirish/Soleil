@@ -27,8 +27,8 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ toggleSave, savedProduc
   const isSaved = savedProducts.includes(product.id);
 
   const handleBuyNow = () => {
-    // Priority 1: Direct URL from AI
-    // Priority 2: Direct Search on ICI Paris XL Website (nl version)
+    // Priority 1: Direct Search on ICI Paris XL Website (nl version)
+    // Priority 2: Direct URL from AI
     const directUrl = product.productUrl;
     if (directUrl && directUrl.startsWith('http') && directUrl.includes('iciparisxl')) {
       window.open(directUrl, '_blank');

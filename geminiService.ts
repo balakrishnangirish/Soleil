@@ -2,7 +2,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { Product, SearchResult } from "./types";
 
-const BEAUTY_PROMPT = `You are a professional Beauty Shopping Assistant for the Netherlands.
+const BEAUTY_PROMPT = `You are "Soleil", a professional Beauty Shopping Assistant for the Netherlands.
 Your goal is to find REAL products currently available at 'ICI Paris XL' (iciparisxl.nl).
 
 MANDATORY DATA RULES:
@@ -37,7 +37,7 @@ export async function searchProducts(query: string, gender: string): Promise<Sea
   try {
     const response = await ai.models.generateContent({
       model,
-      contents: `Search for ${gender} beauty products matching: "${query}" specifically at ICI Paris XL Netherlands. ${BEAUTY_PROMPT}`,
+      contents: `Soleil, search for ${gender} beauty products matching: "${query}" specifically at ICI Paris XL Netherlands. ${BEAUTY_PROMPT}`,
       config: {
         tools: [{ googleSearch: {} }],
       }
