@@ -1,7 +1,5 @@
 {
   "name": "Soleil",
   "description": "Soleil is your personal AI-powered beauty consultant. Using advanced Gemini reasoning, Soleil finds the perfect skincare and makeup products from the best retailers, tailored specifically for your unique needs.",
-  "requestFramePermissions": [
-    "camera"
-  ]
+  "requestFramePermissions": []
 }

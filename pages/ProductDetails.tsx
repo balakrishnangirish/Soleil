@@ -26,17 +26,9 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ toggleSave, savedProduc
 
   const isSaved = savedProducts.includes(product.id);
 
-  const handleBuyNow = () => {
-    // Priority 1: Direct Search on ICI Paris XL Website (nl version)
-    // Priority 2: Direct URL from AI
-    const directUrl = product.productUrl;
-    if (directUrl && directUrl.startsWith('http') && directUrl.includes('iciparisxl')) {
-      window.open(directUrl, '_blank');
-    } else {
-      const fallbackSearch = `https://www.iciparisxl.nl/nl/search?text=${encodeURIComponent(product.brand + ' ' + product.name)}`;
-      window.open(fallbackSearch, '_blank');
-    }
-  };
+  const buyUrl = (product.productUrl && product.productUrl.startsWith('http')) 
+    ? product.productUrl 
+    : `https://www.iciparisxl.nl/nl/search?text=${encodeURIComponent(product.brand + ' ' + product.name)}`;
 
   return (
     <div className="flex-1 flex flex-col bg-background-dark overflow-y-auto pb-40 no-scrollbar">
@@ -121,15 +113,17 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ toggleSave, savedProduc
         </div>
       </main>
 
-      {/* Floating Action Bar (Responsive Buy Button) */}
+      {/* Floating Action Bar (Responsive Buy Link) */}
       <div className="fixed bottom-0 left-0 w-full px-4 py-6 bg-background-dark/80 backdrop-blur-2xl border-t border-white/5 z-50 pb-12">
-        <button 
-          onClick={handleBuyNow}
-          className="w-full h-16 bg-primary hover:bg-[#4ff592] active:scale-[0.97] transition-all rounded-2xl flex items-center justify-center gap-4 shadow-2xl shadow-primary/20"
+        <a 
+          href={buyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full h-16 bg-primary hover:bg-[#4ff592] active:scale-[0.97] transition-all rounded-2xl flex items-center justify-center gap-4 shadow-2xl shadow-primary/20 no-underline"
         >
           <span className="text-background-dark font-black uppercase tracking-[0.1em] text-sm">Nu Kopen bij ICI Paris XL</span>
           <span className="material-symbols-outlined text-background-dark text-xl">shopping_bag</span>
-        </button>
+        </a>
       </div>
     </div>
   );

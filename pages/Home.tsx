@@ -98,7 +98,7 @@ const Home: React.FC<HomeProps> = ({ gender, setGender }) => {
 
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-between px-1">
-            <h3 className="text-white text-lg font-black tracking-widest">⚡️ Trending</h3>
+            <h3 className="text-white text-lg font-black tracking-widest">Trending ⚡️</h3>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-6 -mx-4 px-4 no-scrollbar snap-x snap-mandatory">
             {trending.map((item, idx) => (
