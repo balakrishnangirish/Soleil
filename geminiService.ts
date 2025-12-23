@@ -3,169 +3,262 @@ import { GoogleGenAI } from "@google/genai";
 import { Product, SearchResult } from "./types";
 
 /**
- * SOURCE DATA CONTEXT
- * This is the literal source of truth derived from the provided JSON.
- * Soleil MUST only recommend these specific products with these specific URLs.
+ * CONSOLIDATED SOURCE DATA CONTEXT
+ * This catalog combines all provided product data from ICI Paris XL.
+ * It is the single source of truth for Soleil.
  */
 const SOURCE_CATALOG = [
+  // --- GEUREN (DAMES) ---
   {
-    "brand": "hugo-boss",
-    "name": "Ma Vie Eau de Parfum",
-    "category": "Geuren",
-    "details": "Fris vrouwelijk parfum opgebouwd rond de cactusbloem. Moderne interpretatie van bloemige, groene noten met een delicate roze twist.",
-    "price": "€34,99",
-    "url": "https://www.iciparisxl.nl/hugo-boss/ma-vie/eau-de-parfum/p/BP_694607",
-    "image": "https://media.iciparisxl.nl/medias/prd-front-694593-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8NTkzMjd8aW1hZ2UvanBlZ3xhRGhoTDJnMU5TOHhNVGt5TVRZMk5qZ3pORFEyTWk5d2NtUXRabkp2Ym5RdE1uTmpNek16WHprMU5IZ3hNVGt5TG1wd1p3fDdkYzNlMWEyNWU3M2IxODg4NGRhMTcxMDUwYWMyM2M1NzZlMWMwZDU5ODQwMDNhOWViMTM0ZmMxZDY1ZjQ2ZDE"
+    "brand": "DIOR",
+    "name": "Miss Dior Essence de parfum",
+    "category": "Damesparfum",
+    "details": "Essence de parfum - noten van confituur, bloemen en hout. Een symbool van zelfverzekerde vrouwelijkheid.",
+    "price": "€88,64",
+    "url": "https://www.iciparisxl.nl/dior/miss-dior-essence/essence-de-parfum-noten-van-confituur-bloemen-en-hout/p/BP_1387000",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1387000-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MjE4OTc2fGltYWdlL2pwZWd8YURneEwyZzBPUzh4TVRnNE1URXdORFEwTVRNM05DOXdjbVF0Wm5KdmJuUXRNVE00TnpBd01GODVOVFI0TVRFNU1pNXFjR2N8ZmYxODg3ZWIxODA4M2JmYTQ4M2MyZTQ0MzhmN2ExYzEwY2YzMjg1MTZjYmJhZTJiNDgyMzU0YzRhZGZlZWFjZg"
   },
   {
-    "brand": "dior",
-    "name": "Miss Dior Eau de Parfum",
-    "category": "Geuren",
-    "details": "Bloemig en fris met geurnoten van iris roos, verhelderd door een veelheid aan frisse accenten. Een briesje van optimisme.",
+    "brand": "DIOR",
+    "name": "J'adore Parfum d'eau",
+    "category": "Damesparfum",
+    "details": "Eau de parfum zonder alcohol. Een concentraat van water en bloemen met een unieke sensorialiteit.",
     "price": "€70,60",
-    "url": "https://www.iciparisxl.nl/dior/miss-dior/miss-dior-eau-de-parfum/p/BP_1134172",
-    "image": "https://media.iciparisxl.nl/medias/prd-front-1134172-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MjI3OTc5fGltYWdlL2pwZWd8YURRNUwyZzJaUzh4TVRReU16QTJNekUzT1RJNU5DOXdjbVF0Wm5KdmJuUXRNVEV6TkRFM01sODVOVFI0TVRFNU1pNXFjR2N8YjM3Yzk2ZmQ0ZjYxNzA3YTc4ODU0M2UzOTM1NGM1OWZiYjZkOWZiMGJjYzAyMjg0NmNkNjdjMzRjYTQ1NjQ1ZQ"
+    "url": "https://www.iciparisxl.nl/dior/jadore-parfum-deau/eau-de-parfum-zonder-alcohol/p/BP_1177392",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1177378-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8NzIyOTJ8aW1hZ2UvanBlZ3xhR1F6TDJnMVpTOHhNRGcyTnpjd09EZ3lNVFV6TkM5d2NtUXRabkp2Ym5RdE1URE16TnpMOHVOVFI0TVRFNU1pNXFjR2N8ODlkYWVjOGEwNmY3YTU5OGE1YzcyY2Y4Y2NjMThhNzgzMzcwNjc2MDJmNDZhZGFkMTIxYjZlZWY5NjY4NTVlNw"
   },
   {
-    "brand": "dior",
-    "name": "J'adore Eau de Parfum Infinissime",
-    "category": "Geuren",
-    "details": "Sensueel en krachtig. Een golf van bloemen: centifoliaroos, sambacjasmijn, ylang-ylang en tuberoos met houtige accenten van sandelhout.",
-    "price": "€74,04",
-    "url": "https://www.iciparisxl.nl/dior/jadore/jadore-eau-de-parfum-infinissime/p/BP_1089988",
-    "image": "https://media.iciparisxl.nl/medias/prd-front-1144427-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8Nzg0NzR8aW1hZ2UvanBlZ3xhRGRpTDJnM09TOHhNRGcyTnpjd016VTNPRFkxTkM5d2NtUXRabkp2Ym5RdE1URTBORFF5TjE4NU5UUjRNVEU1TWk1cWNHY3w3ZDFhZjM1N2M5MjkzYThiNTBhZGY4YWYyMGE3MmIxOTliN2JjNDA2MWQ4ODUxNmEyNDhiNmRiMjY5OWQzMWFj"
+    "brand": "ZADIG & VOLTAIRE",
+    "name": "This is Her! Eau de Parfum",
+    "category": "Damesparfum",
+    "details": "Een sensuele en krachtige geur die rock en elegantie combineert.",
+    "price": "€59,20",
+    "url": "https://www.iciparisxl.nl/zadig-voltaire/zadig/eau-de-parfum/p/BP_1357019",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1357019-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTA5OTMyfGltYWdlL2pwZWd8YUdVMUwyaGlNUzh4TVRVek5UQTVNall4TXpFMU1DOXdjbVF0Wm5KdmJuUXRNVE0xTnpBeE9WODVOVFI0TVRFNU1pNXFjR2N8OTE3ZTVlNDRjZTQ0OWE2NDA5YWU2ZDJiZDFhNTkwYWJlMTY5NDM4ZmQxNTk2NGQyMWQxOTcxM2UxZjdjMmRmMA"
   },
   {
-    "brand": "lancôme",
-    "name": "La Vie est Belle Eau de Parfum",
-    "category": "Geuren",
-    "details": "Een ode aan geluk. Zoete, fruitig, bloemige geur met zeldzame, zuivere en natuurlijke ingrediënten. Navulbaar.",
-    "price": "€54,99",
-    "url": "https://www.iciparisxl.nl/lancome/la-vie-est-belle/eau-de-parfum-navulbaar-dames-parfum/p/BP_593198",
-    "image": "https://media.iciparisxl.nl/medias/prd-front-1190370-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTY3NzUyfGltYWdlL2pwZWd8YUdJMkwyZzFNQzh4TVRFd09EVXdPRGd5TnpZM09DOXdjbVF0Wm5KdmJuUXRNVEU1TURNM01GODVOVFI0TVRFNU1pNXFjR2N8OWExNmQ5OGNlMWI2ZjgxMTAwYTgzNTk5Nzk3MzVkZjU4NTExNTY4MzUxMmJkZjRlNjY4MDU0MDAxODhhYjg4MQ"
-  },
-  {
-    "brand": "hugo-boss",
-    "name": "Alive Eau de Parfum",
-    "category": "Geuren",
-    "details": "Eigentijds en zelfverzekerd. Mix van zachte en gedurfde noten: sprankelende appel, pruim en een hart van jasmijn sambac.",
-    "price": "€67,20",
-    "url": "https://www.iciparisxl.nl/hugo-boss/alive/hugo-boss-alive-eau-de-parfum/p/BP_1067518",
-    "image": "https://media.iciparisxl.nl/medias/prd-front-1067518-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8ODEzMjN8aW1hZ2UvanBlZ3xhRFprTDJobU55OHhNVEUzTmprd05EWTROelkwTmk5d2NtUXRabkp2Ym5RdE1UQTJOelV4T0Y4NU5UUjRNVEU1TWk1cWNHY3xlNDk5ZmI2M2Q2NmY4ZjM0NzY4YjRlODE1YmE3MzVjMzgwMGI0YjdmZTVhN2E4NGMxNmJmZjU2NTAxMmFhYjNl"
-  },
-  {
-    "brand": "armani",
-    "name": "My Way Intense Eau de Parfum",
-    "category": "Geuren",
-    "details": "Intense en authentieke damesgeur met oranjebloesem, sandelhout en verslavende vanille. Bloemig houtachtig karakter.",
-    "price": "€81,60",
-    "url": "https://www.iciparisxl.nl/armani/my-way-intense/eau-de-parfum-intense-vrouwen/p/BP_1133269",
-    "image": "https://media.iciparisxl.nl/medias/prd-front-1133269-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTQ2NDY1fGltYWdlL2pwZWd8YURabUwyaGhOaTh4TURFNU9Ea3dPVGt4TVRBM01DOXdjbVF0Wm5KdmJuUXRNVEV6TXpJMk9WODVOVFI0TVRFNU1pNXFjR2N8NmVkNWJiM2FiN2QwYTkzZTg4NWUwNTg1MjA4YTg3MmE2NDYwNzRjOTFlZmExOTFmYjI4Yjg0MWI5OTIyYWM5MA"
-  },
-  {
-    "brand": "yves-saint-laurent",
-    "name": "Black Opium Eau de Parfum",
-    "category": "Geuren",
-    "details": "Warme en kruidige damesgeur met koffie, witte bloemen en vanille. Voor de rebelse vrouw die verslaafd is aan rock en glamour.",
-    "price": "€74,40",
-    "url": "https://www.iciparisxl.nl/yves-saint-laurent/black-opium/eau-de-parfum/p/BP_703098",
-    "image": "https://media.iciparisxl.nl/medias/prd-side-703098-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8NTI2MTk4fGltYWdlL2pwZWd8YURZMUwyaGhOQzh4TURjMU5EQTVOekExTXpjeU5pOXdjbVF0YzJsa1pTMDNNRE13T1RoZk9UVTBlREV4T1RJdWFuQm58MGJmZmNmOTUzZDFiYzhkOTU5MGJkMWMxNWNhYWQ2MTA1MzZlZjlkZmRkNTZlNDI3YjNmM2E0NjNkYWUxNWFkMg"
-  },
-  {
-    "brand": "lancôme",
-    "name": "Idôle Eau de Parfum",
-    "category": "Geuren",
-    "details": "Frisse, zuivere bloemige geur. Schoon en zacht, krachtig en comfortabel. Bedacht door vrouwen voor vrouwen met ambitie.",
+    "brand": "LANCOME",
+    "name": "Idôle Eau De Parfum",
+    "category": "Damesparfum",
+    "details": "Een frisse, zuivere bloemige geur. Navulbaar. Bedacht door vrouwen voor vrouwen met ambitie.",
     "price": "€46,99",
     "url": "https://www.iciparisxl.nl/lancome/idole/eau-de-parfum-navulbaar-dames-parfum/p/BP_1036732",
     "image": "https://media.iciparisxl.nl/medias/prd-front-1036732-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTExMzU3fGltYWdlL2pwZWd8YURWakwyZzJPUzh4TVRZME1qVXdPVGMxTkRNNU9DOXdjbVF0Wm5KdmJuUXRNVEF6Tmpjek1sODVOVFI0TVRFNU1pNXFjR2N8NGNhOTkzZTRkMjkyNjNhYTYyNjY1MTA2NWJkOGNlMjc0NGQ0YmE0Yjg1ZDVhZjA2MGM1NWFmZmRmMzQ2ZWZhZA"
   },
   {
-    "brand": "gucci",
-    "name": "Flora Gorgeous Orchid Eau de Parfum",
-    "category": "Geuren",
-    "details": "Gourmand bloemig parfum met levendige warmte van vanille en adembenemende contrasten. Omarm je grenzeloze creativiteit.",
+    "brand": "HUGO BOSS",
+    "name": "Boss Alive Eau de Parfum",
+    "category": "Damesparfum",
+    "details": "Sprankelende appel- en pruimentopnoten stralen optimisme uit voor de zelfverzekerde vrouw.",
+    "price": "€67,20",
+    "url": "https://www.iciparisxl.nl/hugo-boss/alive/hugo-boss-alive-eau-de-parfum/p/BP_1067518",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1067518-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8ODEzMjN8aW1hZ2UvanBlZ3xhRFprTDJobU55OHhNVEUzTmprd05EWTROelkwTmk5d2NtUXRabkp2Ym5RdE1UQTJOelV4T0Y4NU5UUjRNVEU1TWk1cWNHY3xlNDk5ZmI2M2Q2NmY4ZjM0NzY4YjRlODE1YmE3MzVjMzgwMGI0YjdmZTVhN2E4NGMxNmJmZjU2NTAxMmFhYjNl"
+  },
+  {
+    "brand": "ARMANI",
+    "name": "My Way Intense Eau de Parfum",
+    "category": "Damesparfum",
+    "details": "Een intense en authentieke damesgeur met oranjebloesem, sandelhout en verslavende vanille.",
+    "price": "€81,60",
+    "url": "https://www.iciparisxl.nl/armani/my-way-intense/eau-de-parfum-intense-vrouwen/p/BP_1133269",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1133269-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTQ2NDY1fGltYWdlL2pwZWd8YURabUwyaGhOaTh4TURFNU9Ea3dPVGt4TVRBM01DOXdjbVF0Wm5KdmJuUXRNVEV6TXpJMk9WODVOVFI0TVRFNU1pNXFjR2N8NmVkNWJiM2FiN2QwYTkzZTg4NWUwNTg1MjA4YTg3MmE2NDYwNzRjOTFlZmExOTFmYjI4Yjg0MWI5OTIyYWM5MA"
+  },
+  {
+    "brand": "LANCOME",
+    "name": "La Vie est Belle Eau de Parfum",
+    "category": "Damesparfum",
+    "details": "De iconische damesgeur van Lancôme. Een zoete, fruitige en bloemige ode aan geluk.",
+    "price": "€54,99",
+    "url": "https://www.iciparisxl.nl/lancome/la-vie-est-belle/eau-de-parfum-navulbaar-dames-parfum/p/BP_593198",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1190370-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTY3NzUyfGltYWdlL2pwZWd8YUdJMkwyZzFNQzh4TVRFd09EVXdPRGd5TnpZM09DOXdjbVF0Wm5KdmJuUXRNVEU1TURNM01GODVOVFI0TVRFNU1pNXFjR2N8OWExNmQ5OGNlMWI2ZjgxMTAwYTgzNTk5Nzk3MzVkZjU4NTExNTY4MzUxMmJkZjRlNjY4MDU0MDAxODhhYjg4MQ"
+  },
+  {
+    "brand": "HERMÈS",
+    "name": "Barénia Eau de Parfum",
+    "category": "Damesparfum",
+    "details": "Een tijdloze en elegante geur die passie en authenticiteit uitstraalt.",
+    "price": "€63,00",
+    "url": "https://www.iciparisxl.nl/hermes/barenia/eau-de-parfum/p/BP_1325456",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1325456-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTQzNzUzfGltYWdlL2pwZWd8YURWa0wyaGhZeTh4TVRFMU5qRXpNekUxTURjMU1DOXdjbVF0Wm5KdmJuUXRNVE15TlRRM1NsODVOVFI0TVRFNU1pNXFjR2N8NmYzOGU1NDM3ZjZlZWJkMmY1YTJjNjI3NzNhOWVmYTc2Yzg4YjFjNmZmZjEzOTEwNDJhNjE0OTM2Y2ExZjA4Zg"
+  },
+  {
+    "brand": "GUCCI",
+    "name": "Flora Gorgeous Orchid",
+    "category": "Damesparfum",
+    "details": "Gucci’s eerste gourmand bloemige parfum. Levendige warmte van vanille en adembenemende contrasten.",
     "price": "€64,80",
     "url": "https://www.iciparisxl.nl/gucci/flora-gorgeous-orchid/eau-de-parfum/p/BP_1324812",
     "image": "https://media.iciparisxl.nl/medias/prd-front-1324812-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MjA3MjY5fGltYWdlL2pwZWd8YURnd0wyZ3hOeTh4TVRjM05EWTFPVEUyTmpJek9DOXdjbVF0Wm5KdmJuUXRNVE15TkRneE1sODVOVFI0TVRFNU1pNXFjR2N8ZmE3NmU4NzQ0YzljYTIxMTllZDc0YjQ1MmNmYTAzMTg0ZTBiZjE0OThhZmViOWYwM2IwOTE1ZDkyYzAyNzAxMQ"
   },
+
+  // --- GEUREN (HEREN) ---
   {
-    "brand": "marc-jacobs",
-    "name": "Daisy Ever So Fresh Eau de Parfum",
-    "category": "Geuren",
-    "details": "Bruisend, levendig en verkwikkend. Sappige citrusnoten, rozenwater en kasjmierhout zorgen voor een wervelende warmte.",
-    "price": "€64,00",
-    "url": "https://www.iciparisxl.nl/marc-jacobs/daisy-ever-so-fresh/eau-de-parfum-spray/p/BP_1172751",
-    "image": "https://media.iciparisxl.nl/medias/prd-front-1172751-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8Mjc1NTU3fGltYWdlL2pwZWd8YURrMEwyaGlaQzg1Tnpjd09UTTBOVGs1TnpFd0wzQnlaQzFtY205dWRDMHhNVGN5TnpVeFh6azFOSGd4TVRreUxtcHdad3wyNzQwOThjMWM3ZmY1NDZkYTY0Njg0YzQwYTVhYmVhYTNkMzMxMTBkZTgxODc2M2ZlZGYyZDNiNTM4MjVlY2M3"
+    "brand": "ARMANI",
+    "name": "Acqua di Giò Profondo Le Parfum",
+    "category": "Herenparfum",
+    "details": "Een intens mariene geur voor de moderne man. Krachtig, diep en verfrissend.",
+    "price": "€102,40",
+    "url": "https://www.iciparisxl.nl/armani/acqua-di-gio-profondo-le-parfum/heren-parfum/p/BP_1307858",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1307858-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MjQ0ODg3fGltYWdlL2pwZWd8YURWa0wyaGpZeTh4TURrME1UTXhOVFEwT0RnMk1pOXdjbVF0Wm5KdmJuUXRNVE13TnpnMU9GODVOVFI0TVRFNU1pNXFjR2N8OGQ4YmE2ZTBiMDhkMDgwM2M2YWFlNTI4Nzk4YmE1ODI2MjdiOWY4ZGQyY2JkZDQ2NTdkM2VjNTQzZjk0MDFlZg"
   },
   {
-    "brand": "prada",
-    "name": "Paradoxe Eau de Parfum",
-    "category": "Geuren",
-    "details": "Bloemige damesgeur met akkoorden van amber en muskus. Een viering van nooit hetzelfde zijn, maar altijd jezelf. Navulbaar.",
-    "price": "€79,20",
-    "url": "https://www.iciparisxl.nl/dior/jadore-lor/parfum-met-bloemennoten/p/BP_1262925",
-    "image": "https://media.iciparisxl.nl/medias/prd-front-1176076-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTQ5MDY2fGltYWdlL2pwZWd8YURnMEwyaGhNeTh4TVRFM05qa3hNell3TURVME1pOXdjbVF0Wm5KdmJuUXRNVEUzTmpBM05sODVOVFI0TVRFNU1pNXFjR2N8ZGRhMDJhMzk5ZWE3ZGMwOTExNzcyZTI0YzljNTMyYzdlNDcyNWMzYzM4MjkwYTk2YmVlNGU3ODczNTllYjE4Nw"
+    "brand": "YVES SAINT LAURENT",
+    "name": "MYSLF Eau De Parfum",
+    "category": "Herenparfum",
+    "details": "Een statement voor moderne mannelijkheid. Een mix van bloemige en houtachtige noten.",
+    "price": "€96,80",
+    "url": "https://www.iciparisxl.nl/yves-saint-laurent/myslf/eau-de-parfum-navulbaar-herenparfum/p/BP_1260251",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1260251-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTY1NjU5fGltYWdlL2pwZWd8YURKbUwyaGtOUzh4TURVeE9ERXdOREEwTnpZME5pOXdjbVF0Wm5KdmJuUXRNVEkyTURJMU1WODVOVFI0TVRFNU1pNXFjR2N8NzM1NTA0MGZlYmRkNWU3MGY3NjMwYzJjOGVlN2RhNTlmYzIyNWEwM2U2NmJkZWVmZTViNTJmM2Y4NzJjZjUyYQ"
   },
   {
-    "brand": "armani",
-    "name": "My Way Eau de Parfum",
-    "category": "Geuren",
-    "details": "Bloemige, houtachtige damesgeur. Tijdloos en elegant. Voor de nieuwsgierige vrouw die bereid is haar horizon te verbreden.",
-    "price": "€74,40",
-    "url": "https://www.iciparisxl.nl/hermes/barenia/eau-de-parfum/p/BP_1325456",
-    "image": "https://media.iciparisxl.nl/medias/prd-front-1090394-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTMzNzc5fGltYWdlL2pwZWd8YURJM0wyaGxOaTh4TVRBM09EVXlNamMyTlRNME1pOXdjbVF0Wm5KdmJuUXRNVEE1TURNNU5GODVOVFI0TVRFNU1pNXFjR2N8NzQ2M2JiMzEzMWIwMDI4NDM3NjRlNzVmNmMxMjY4MDMyMzZiOWUzYTg2MDU5NTc0MTNjOGQyY2ZlOTk4MjRkMw"
+    "brand": "DIOR",
+    "name": "Sauvage Elixir",
+    "category": "Herenparfum",
+    "details": "Een geconcentreerd parfum doordrenkt met de iconische Sauvage frisheid en een bedwelmend hart van kruiden.",
+    "price": "€144,60",
+    "url": "https://www.iciparisxl.nl/dior/sauvage/elixir-/p/BP_1135964",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1135964-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8OTQzNjF8aW1hZ2UvanBlZ3xhRFpoTDJnd01DOHhNVEkyTlRBME56VTJNREl5TWk5d2NtUXRabkp2Ym5RdE1URXpOVGsyTkY4NU5UUjRNVEU1TWk1cWNHY3wzMjFhNDk3NzdlYzM1MWRlYjBiMDcxMDdiYzRjNTBmMGJiZmVjNzgzMjhhYmVkNGMxMmYwYjUzYTM4MzEzZGQ0"
   },
   {
-    "brand": "rabanne",
-    "name": "Fame Eau de Parfum",
-    "category": "Geuren",
-    "details": "Onweerstaanbaar Parijse geest. Sappige mango, zuivere jasmijn en sensuele wierook. Een ode aan een nieuw tijdperk van vrouwelijkheid.",
-    "price": "€59,52",
-    "url": "https://www.iciparisxl.nl/dior/jadore-parfum-deau/eau-de-parfum-zonder-alcohol/p/BP_1177392",
-    "image": "https://media.iciparisxl.nl/medias/prd-front-1173066-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTY4NjI0fGltYWdlL2pwZWd8YURVM0wyZ3haQzh4TVRVeE5EQXlNREV3TWpFM05DOXdjbVF0Wm5KdmJuUXRNVEUzTXpBMk5sODVOVFI0TVRFNU1pNXFjR2N8NzE5YThlYWE3Njg1OWJhOTJmZDIyNmQ5ZGI5YTQ5NjJlNWRmYmJkOTgxNjAzNGM1YzE5NzI1ZGI0NjU3NTY4Ng"
+    "brand": "DAVIDOFF",
+    "name": "Cool Water Man Eau De Toilette",
+    "category": "Herenparfum",
+    "details": "De ultieme oceaan-geïnspireerde geur. Fris en tijdloos.",
+    "price": "€36,00",
+    "url": "https://www.iciparisxl.nl/davidoff/cool-water-man/eau-de-toilette/p/BP_36364",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-35858-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTE0ODU4fGltYWdlL2pwZWd8YURkbUwyZzJaQzh4TVRJME5UQXdOelV6TmpFMU9DOXdjbVF0Wm5KdmJuUXRNelU0TlRoZk9UVTBlREV4T1RJdWFuQm58YTEzMmY2NGNhNmViNjljM2NlYzg4YWU2YjJhZDg2NGRiODYwMWVjYzdhMGM1MmZmYzdmZjI1MGU1OTM4NGIyMw"
+  },
+
+  // --- VERZORGING (SKINCARE) ---
+  {
+    "brand": "DRUNK ELEPHANT",
+    "name": "Protini Polypeptide Cream",
+    "category": "Verzorging",
+    "details": "Eiwitrijke vochtinbrengende crème die peptidecomplexen combineert voor een sterkere, gezondere huid.",
+    "price": "€70,00",
+    "url": "https://www.iciparisxl.nl/drunk-elephant/moisturizer/protini-polypeptide-cream/p/BP_1170803",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1170803-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8NDAyOTA3fGltYWdlL2pwZWd8YURWa0wyZzNaUzh4TURrMk1qZzNNamN5T1RZek1DOXdjbVF0Wm5KdmJuUXRNVEUzTURnd00xODVOVFI0TVRFNU1pNXFjR2N8ZTE1MDc4YWE5MWM5YjNlMzg2NTYyYzEyNmI2ZDcxZDJhMzI2YmE4OTk0NzVjMmYzYWRhMmMwMDg4NzNkN2RmZA"
   },
   {
-    "brand": "dior",
-    "name": "J'adore Parfum d'eau",
-    "category": "Geuren",
-    "details": "Concentraat van water en bloemen zonder alcohol. Sambacjasmijn, neroli en magnolia in een revolutionaire formule.",
-    "price": "€70,60",
-    "url": "https://www.iciparisxl.nl/dior/miss-dior-blooming-bouquet/eau-de-toilette/p/BP_1193254",
-    "image": "https://media.iciparisxl.nl/medias/prd-front-1177378-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8NzIyOTJ8aW1hZ2UvanBlZ3xhR1F6TDJnMVpTOHhNRGcyTnpjd09EZ3lNVFV6TkM5d2NtUXRabkp2Ym5RdE1URTNOek0zT0Y4NU5UUjRNVEU1TWk1cWNHY3w4OWRhZWM4YTA2ZjdhNTk4YTVjNzJjZjhjY2MxOGE3ODMzNzA2NzYwMmY0NmFkYWQxMjFiNmVlZjk2Njg1NWU3"
+    "brand": "ESTEE LAUDER",
+    "name": "Advanced Night Repair Serum",
+    "category": "Verzorging",
+    "details": "Gezichtsserum - anti-aging & hydraterend voor dag-en nachtroutine. De #1 serum wereldwijd.",
+    "price": "€70,08",
+    "url": "https://www.iciparisxl.nl/estee-lauder/advanced-night-repair-synchronized-multi-recovery-complex/serum-gezicht-anti-aging-hydraterend/p/BP_1088070",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1148123-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTIyMTI3fGltYWdlL2pwZWd8YURobEwyZ3lPQzh4TVRFNU5UQXdOek0yT1RJME5pOXdjbVF0Wm5KdmJuUXRNVEUwT0RFeU0xODVOVFI0TVRFNU1pNXFjR2N8NWZjZjI0YzUxYTM3ZWM1ZjQ3NzBkMGE3MzBkMTc1OThmMmI3MjJjZDk0ZDNkYzdjYmJhODE1MDhiZWM0NjNhMw"
   },
   {
-    "brand": "mugler",
-    "name": "Alien Goddess Eau de Parfum",
-    "category": "Geuren",
-    "details": "Sprankelende bloemige damesgeur met bergamot, Indische jasmijn en bourbon vanille. Nodigt uit tot positiviteit en mysterie.",
-    "price": "€84,80",
-    "url": "https://www.iciparisxl.nl/mugler/alien-goddess/eau-de-parfum-navulbaar-parfum/p/BP_1136083",
-    "image": "https://media.iciparisxl.nl/medias/prd-front-1136083-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTIwMDczfGltYWdlL2pwZWd8YURrMUwyaGtZUzh4TVRBNE1EYzFNVGczTkRBM09DOXdjbVF0Wm5KdmJuUXRNVEV6TmpBNE0xODVOVFI0TVRFNU1pNXFjR2N8Mzg0ZjYyMTk2NDg0ZWQ1YTJkZjc3YzQxZmU5MzIzZjQ2ZjIwNjBmMWEzMWVjNDE4NDlkOTQ1MzI0ZjE1NjRmZg"
+    "brand": "SHISEIDO",
+    "name": "Vital Perfection Supreme Cream",
+    "category": "Verzorging",
+    "details": "Concentrated Supreme Cream voor een gelifte en stevigere huid in slechts 1 week.",
+    "price": "€135,20",
+    "url": "https://www.iciparisxl.nl/shiseido/vital-perfection/concentrated-supreme-cream/p/BP_1292843",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1292843-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MzQ4MDA4fGltYWdlL2pwZWd8YURZMEwyZ3lNaTh4TVRnMU16Z3lPVFkyT0RnNU5DOXdjbVF0Wm5KdmJuUXRNVEk1TWpnME0xODVOVFI0TVRFNU1pNXFjR2N8YzE3MGU3ODYzYThjZmZhOGU5MTZmOTBjMjY5NGEwODZlMzEyMWJkZTdhMjk2MTEwZjM1NWQ5ZWZmZjRjNDE1Zg"
   },
   {
-    "brand": "dior",
-    "name": "Miss Dior Blooming Bouquet",
-    "category": "Geuren",
-    "details": "Frisse en tedere geur met noten van roos, pioenroos en witte musks. Contrasterende sillage met de iconische couturestrik.",
-    "price": "€62,84",
-    "url": "https://www.iciparisxl.nl/gucci/flora/gorgeous-jasmine-eau-de-parfum-natural-spray/p/BP_1174200",
-    "image": "https://media.iciparisxl.nl/medias/prd-front-1193261-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTM5NTY5fGltYWdlL2pwZWd8YUdNNEwyaGpOeTh4TVRReU16QTJOekV4TVRRMU5DOXdjbVF0Wm5KdmJuUXRNVEE1TXpJMk1WODVOVFI0TVRFNU1pNXFjR2N8YTU0M2ZkYTUwZmNmYjJhZTgzNzBhMmRiOTE2NjU4Mjc5NDkwYTIxYTBiZDVmMzg0N2FmNjM3ZmNjZDY3YWEwZg"
+    "brand": "CLAY AND GLOW",
+    "name": "Hydrating Moisturizer",
+    "category": "Verzorging",
+    "details": "Hydraterende dag- en nachtcrème voor een stralende huid. Gemaakt met natuurlijke ingrediënten.",
+    "price": "€23,96",
+    "url": "https://www.iciparisxl.nl/clay-and-glow/hydrating-moisturizer/hydraterende-dag-en-nachtcreme/p/BP_1089071",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1089071-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8NTY0MjZ8aW1hZ2UvanBlZ3xhR1kwTDJnMU15OHhNakF3TmpVM05EWXlNRGN3TWk5d2NtUXRabkp2Ym5RdE1UQTRPVEEzTVY4NU5UUjRNVEU1TWk1cWNHY3xkYjg4OGJmNGMzNmEyNDIzOTM2ZWZhMTBhMTgzMjQyNjM4MzE0NTZhMTIwYmUzOTFiMjQ0MTJkMmVjNmVlMTA3"
+  },
+
+  // --- REINIGING ---
+  {
+    "brand": "QUEEN TARZI",
+    "name": "The Gentle Cleansing Balm",
+    "category": "Reiniging",
+    "details": "Verwijder make-up moeiteloos zonder de huid uit te drogen. Een zachte balsem voor alle huidtypes.",
+    "price": "€32,37",
+    "url": "https://www.iciparisxl.nl/queen-tarzi/cleansing-balm/the-gentle-cleansing-balm/p/BP_1252803",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1252803-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8OTQyNzZ8aW1hZ2UvanBlZ3xhR0ppTDJoaU9TOHhNRE13TmpZMU9ETXpOamM1T0M5d2NtUXRabkp2Ym5RdE1USTFNamd3TTE4NU5UUjRNVEU1TWk1cWNHY3wwYmM2YmE4MmEzYmMwNGI2MWNhNGZjNDI1NTMzYzNmMDIwOGI1NWU0OGJhMGI3ZTNlY2M3NmQzYWMxNmM2OWQz"
+  },
+  {
+    "brand": "DRUNK ELEPHANT",
+    "name": "Beste No. 9 Jelly Cleanser",
+    "category": "Reiniging",
+    "details": "Een vernieuwende jelly cleanser die alle sporen van make-up, overtollige olie en vervuiling verwijdert.",
+    "price": "€35,00",
+    "url": "https://www.iciparisxl.nl/drunk-elephant/cleanser/beste-no-9-jelly-cleanser/p/BP_1170789",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1170789-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8Mzk0ODM2fGltYWdlL2pwZWd8YUdabUwyaGpZeTh4TURFeU5UVTJPREUwTnpRNE5pOXdjbVF0Wm5KdmJuUXRNVEUzTURjNE9WODVOVFI0TVRFNU1pNXFjR2N8MTczNDI2NGVhOWQwYjhmNzhhMTY3MWE0MzY4Y2M4ZDk3ZWI2MjNlYTU3NjFlZTQ1ODI4NDY2YWY4NDdmMGVkMg"
+  },
+
+  // --- HAARVERZORGING ---
+  {
+    "brand": "KERASTASE",
+    "name": "Première Masque Filler Réparateur",
+    "category": "Haarverzorging",
+    "details": "Herstellend haarmasker voor medium tot dik beschadigd haar. Herstelt de kracht van binnenuit.",
+    "price": "€47,51",
+    "url": "https://www.iciparisxl.nl/kerastase/premiere-masque-filler-reparateur/herstellend-haarmasker-voor-medium-tot-dik-beschadigd-haar/p/BP_1293613",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1293613-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTA1MTYzfGltYWdlL2pwZWd8YURjMkwyZ3lZaTh4TURnd01EVTJPRGN5T1RZek1DOXdjbVF0Wm5KdmJuUXRNVEI1TXpZeE0xODVOVFI0TVRFNU1pNXFjR2N8YmQ5MzAzNWEyY2ZjOWQ0NTFjMGQ2NGRjOGIxNjg3M2FkYjI3YWNiNzY3NmZjMDIwYmVhYTc2OTM2OTJkZTA0Zg"
+  },
+  {
+    "brand": "REDKEN",
+    "name": "One United Elixir",
+    "category": "Haarverzorging",
+    "details": "Een multi-benefit spray met 25 verzorgende voordelen voor alle haartypes.",
+    "price": "€28,30",
+    "url": "https://www.iciparisxl.nl/redken/one-united/elixir-25-verzorgende-voordelen/p/BP_1332715",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1332715-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTEzOTYyfGltYWdlL2pwZWd8YUdRMEwyZ3dNaTh4TVRFMk5EazNNRFl4TkRneE5DOXdjbVF0Wm5KdmJuUXRNVE16TWpjeE5WODVOVFI0TVRFNU1pNXFjR2N8NzdlY2UzMDU4MjAxM2EzMzdhZGYyNGEwZTNhMzc4NmE4ZjA4NWYwNTc2YzY1YTRkNDIyOTdkZmY5ZTRkMTA3Ng"
+  },
+
+  // --- HAND & NAGEL ---
+  {
+    "brand": "LA MER",
+    "name": "The Hand Treatment",
+    "category": "Handverzorging",
+    "details": "Verzachtende handcrème - hydraterend & voedend. Helpt de huid te beschermen tegen invloeden van buitenaf.",
+    "price": "€106,37",
+    "url": "https://www.iciparisxl.nl/la-mer/the-hand-treatment/verzachtende-handcreme-hydraterende-voedend/p/BP_167283",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-167283-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTgzNzUwfGltYWdlL2pwZWd8YUdNNUwyZzFaQzg1TlRreE5EVTROemt4TkRVMEwzQnlaQzFtY205dWRDMHhOamN5T0ROZk9UVTBlREV4T1RJdWFuQm58ODIzN2JlZjlmMzY4ZmEwNjFhYWYwNTIxYTI0ODRiYjc3MjA2NGNlZWQzNmY4ZDAxNTc5MzgzMGRmYjYwYmRjMw"
+  },
+  {
+    "brand": "OPI",
+    "name": "Repair Mode Nail Serum",
+    "category": "Nagelverzorging",
+    "details": "Het eerste nagelserum dat nagels van binnenuit herstelt met gepatenteerde Ulti-Plex technologie.",
+    "price": "€31,12",
+    "url": "https://www.iciparisxl.nl/opi/nagelverzorging/opi-repair-mode/p/BP_1258753",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1258753-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8NDQzNzU5fGltYWdlL2pwZWd8YURFM0wyaGhPUzh4TURNMk56WTBNemMzT1RFd01pOXdjbVF0Wm5KdmJuUXRNVEkxT0RjMU0xODVOVFI0TVRFNU1pNXFjR2N8YzY4NTJlYWQyNWM3NjI0MDNkZDhlNDU4ZDc3OTI3MzVlNjJlYjJlOTIwMzhjY2EwMDFiZjNmMThmZDMxM2VjYg"
+  },
+  {
+    "brand": "RITUALS",
+    "name": "The Ritual of Jing Night Handmasker",
+    "category": "Handverzorging",
+    "details": "Een rijk handmasker om 's nachts te gebruiken voor intens gevoede handen.",
+    "price": "€11,90",
+    "url": "https://www.iciparisxl.nl/rituals/the-ritual-of-jing/night-handmasker/p/BP_1244746",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1244746-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTg4MjUxfGltYWdlL2pwZWd8YURZM0wyZzRaQzh4TURIek56ZzNPRE16TnpVMk5pOXdjbVF0Wm5KdmJuUXRNVEkwTkRjME5sODVOVFI0TVRFNU1pNXFjR2N8N2M4ZWIzZjM0ZWFkZmI3OGIzNGJmOGY3YjVkMWQ2YjYwYTFmYWYxZjQ0ODBiZjIyNzU5YjJkMDRjYmRkZDdiMQ"
+  },
+  {
+    "brand": "ICI PARIS XL",
+    "name": "Aqua Voedend voetmasker",
+    "category": "Voetverzorging",
+    "details": "Intensief hydraterend masker voor zachte en verzorgde voeten.",
+    "price": "€6,95",
+    "url": "https://www.iciparisxl.nl/ici-paris-xl/aqua/voedend-voetmasker/p/BP_1372825",
+    "image": "https://media.iciparisxl.nl/medias/prd-front-1372825-954x1192.jpg?context=bWFzdGVyfHByZC1pbWFnZXN8MTU1MzA3fGltYWdlL2pwZWd8YURCh0wyZzVaQzh4TVRnME5qTTJPREF3TWpBM09DOXdjbVF0Wm5KdmJuUXRNVE0zTWpneU5WODVOVFI0TVRFNU1pNXFjR2N8ZWU0ZWQ1YTE0YjE4ZjdlNDFkMWNjMjU3Y2E2YTY2ZDc0YzFhYmI2ZjRhNDJmYWJkNzFhMGY2NWM3ZjY1M2MxOQ"
   }
 ];
 
 const SOLEIL_PROMPT = `You are "Soleil", an Elite AI Beauty Assistant.
-Your core mission is to recommend products from the provided SOURCE CATALOG below.
+Your core mission is to recommend products from the provided CONSOLIDATED SOURCE CATALOG below.
 
 SOURCE CATALOG:
 ${JSON.stringify(SOURCE_CATALOG, null, 2)}
 
 STRICT OPERATIONAL DIRECTIVES:
 1. DATA INTEGRITY: You MUST use the exact 'brand', 'name', 'price', 'details', 'url', and 'image' from the SOURCE CATALOG for your primary suggestions. 
-2. ZERO HALLUCINATION: The 'productUrl' in your response MUST be the exact 'url' provided in the catalog for that product. 
+2. ZERO HALLUCINATION: The 'productUrl' in your response MUST be the exact 'url' provided in the catalog for that product. Never create fake URLs.
 3. IMAGE ACCURACY: The 'image' field in your response MUST be the exact 'image' URL from the catalog.
 4. SEARCH FALLBACK: Only use Google Search if the user query cannot be satisfied by the catalog. In that case, find REAL products on iciparisxl.nl and ensure the URL and image are genuine.
-5. RESPONSE FORMAT: Always return valid JSON matching the structure below.
+5. CONTEXT: User gender is provided. Tailor the tone and selection based on it.
+6. RESPONSE FORMAT: Always return valid JSON matching the structure below.
 
 Return ONLY a JSON object:
 {
@@ -192,7 +285,7 @@ export async function searchProducts(query: string, gender: string): Promise<Sea
   try {
     const response = await ai.models.generateContent({
       model,
-      contents: `User Context: ${gender}. Query: "${query}". Provide the best matches from your source catalog.`,
+      contents: `User Context: ${gender}. Query: "${query}". Provide the best matches from your consolidated catalog.`,
       config: {
         systemInstruction: SOLEIL_PROMPT,
         tools: [{ googleSearch: {} }],
@@ -214,7 +307,7 @@ export async function searchProducts(query: string, gender: string): Promise<Sea
     }
     
     const processedProducts = products.map((p, idx) => {
-      // Final sanity check on image URLs
+      // Final sanity check on image URLs - prioritize catalog accuracy
       const isInvalidImage = !p.image || !p.image.startsWith('http');
       const fallbackUrl = "https://images.unsplash.com/photo-1596462502278-27bfdc4033c8?q=80&w=800&auto=format&fit=crop";
       
@@ -223,7 +316,7 @@ export async function searchProducts(query: string, gender: string): Promise<Sea
         id: p.id || `ici-${idx}-${Date.now()}`,
         matchScore: 100 - (idx * 5),
         image: isInvalidImage ? fallbackUrl : p.image,
-        ingredients: p.ingredients && p.ingredients.length > 0 ? p.ingredients : ["Dermatologisch getest", "Premium ingrediënten"]
+        ingredients: p.ingredients && p.ingredients.length > 0 ? p.ingredients : ["Dermatologisch getest", "Premium ingrediënten", "Gecertificeerde kwaliteit"]
       };
     });
 

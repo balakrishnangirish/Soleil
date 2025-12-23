@@ -40,30 +40,42 @@ const SearchResults: React.FC<SearchResultsProps> = ({ gender, toggleSave, saved
   }, [query, gender]);
 
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto pb-32 bg-background-dark">
-      <div className="sticky top-0 z-50 bg-background-dark/95 backdrop-blur-md border-b border-white/5">
-        <div className="flex items-center px-4 pt-4 pb-4 justify-between">
+    <div className="flex-1 flex flex-col overflow-y-auto pb-12 bg-background-dark no-scrollbar">
+      <div className="sticky top-0 z-40 bg-background-dark/90 backdrop-blur-md border-b border-white/5">
+        <div className="flex items-center px-4 py-3 justify-between">
           <button
             onClick={() => navigate(-1)}
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-card-dark text-white border border-white/10 shadow-sm"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-card-dark text-white border border-white/10 shadow-sm"
           >
-            <span className="material-symbols-outlined">arrow_back</span>
+            <span className="material-symbols-outlined text-base">arrow_back</span>
           </button>
-          <h1 className="text-white font-bold text-lg truncate px-4">{query}</h1>
-          <div className="size-10"></div>
+          <h1 className="text-white font-bold text-sm truncate px-4 opacity-80 uppercase tracking-widest">{query}</h1>
+          <div className="size-9"></div>
         </div>
       </div>
 
       <main className="flex-1 p-4">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-32 space-y-4">
-            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-text-secondary text-sm font-medium tracking-wide uppercase">Bezig met personaliseren...</p>
+          <div className="flex flex-col items-center justify-center py-24 space-y-6">
+            <div className="relative">
+              <div className="size-20 rounded-full border border-soleil-gold/30 animate-ping absolute inset-0 opacity-20"></div>
+              <div className="size-20 rounded-full bg-surface-dark border border-soleil-gold/20 flex items-center justify-center overflow-hidden">
+                <img 
+                  src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=200&auto=format&fit=crop" 
+                  className="size-14 object-cover rounded-full opacity-80 animate-pulse"
+                  alt="Loading Soleil"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-soleil-gold text-[10px] font-black tracking-[0.3em] uppercase animate-pulse">Your personal AI beauty agent</p>
+              <p className="text-text-secondary text-[9px] font-black tracking-[0.1em] uppercase opacity-60">Consulting your beauty profile...</p>
+            </div>
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-20 px-6 text-center space-y-6">
-             <p className="text-white/60 font-medium">{error}</p>
-             <button onClick={() => navigate('/')} className="text-primary font-bold uppercase tracking-widest text-xs border border-primary/20 px-6 py-2 rounded-full">Terug naar Home</button>
+             <p className="text-white/60 font-medium text-sm">{error}</p>
+             <button onClick={() => navigate('/')} className="text-primary font-black uppercase tracking-widest text-[10px] border border-primary/20 px-6 py-2 rounded-full">Terug naar Home</button>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4">
