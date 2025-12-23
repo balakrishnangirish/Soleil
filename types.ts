@@ -11,6 +11,8 @@ export interface Product {
   ingredients: string[];
   aiReasoning?: string;
   productUrl?: string;
+  rating?: number;
+  reviewCount?: number;
 }
 
 export interface SearchResult {
@@ -22,9 +24,23 @@ export interface SearchResult {
   }>;
 }
 
+export interface SoleilResponse {
+  message: string;
+  products: Product[];
+  suggestions?: string[];
+}
+
 export enum Gender {
   FEMALE = 'female',
   MALE = 'male'
+}
+
+export interface BeautyProfile {
+  skinType: string;
+  skinConcern: string;
+  hairType: string;
+  hairConcern: string;
+  isComplete: boolean;
 }
 
 export interface AppState {
